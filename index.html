@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>KB Training</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;background:#111;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;}
@@ -47,6 +50,10 @@ button{-webkit-appearance:none;appearance:none;touch-action:manipulation;cursor:
 .soff{background:#2a2a2a;color:#888;}
 .dbtn{width:100%;background:transparent;border:1px solid #ef4444;color:#ef4444;border-radius:12px;padding:13px;font-size:15px;margin-bottom:8px;min-height:44px;}
 input[type=number]{-webkit-appearance:none;appearance:none;}
+.sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;}
+.sync-ok{background:#22c55e;}
+.sync-off{background:#555;}
+.sync-row{display:flex;align-items:center;font-size:13px;color:#888;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -71,7 +78,7 @@ input[type=number]{-webkit-appearance:none;appearance:none;}
         <div style="color:#666;font-size:12px;margin-top:2px;">All exercises use one kettlebell</div>
       </div>
     </div>
-    <button type="button" id="startbtn" onclick="go()" style="width:100%;background:#f97316;border:none;border-radius:14px;color:#fff;font-size:17px;font-weight:700;padding:18px;display:block;">Start Training →</button>
+    <button type="button" onclick="go()" style="width:100%;background:#f97316;border:none;border-radius:14px;color:#fff;font-size:17px;font-weight:700;padding:18px;display:block;">Start Training →</button>
   </div>
 </div>
 
@@ -148,23 +155,44 @@ input[type=number]{-webkit-appearance:none;appearance:none;}
         </div>
       </div>
       <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="font-size:15px;font-weight:700;">Cloud Sync</div>
+          <div class="sync-row"><span id="sync-dot" class="sync-dot sync-off"></span><span id="sync-label">Offline</span></div>
+        </div>
+        <div style="color:#555;font-size:12px;">Progress auto-saves to Firebase on every action.</div>
+      </div>
+      <div class="card">
         <div style="font-size:13px;font-weight:700;color:#ef4444;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Danger Zone</div>
         <button type="button" class="dbtn" onclick="rWk()">Reset This Week</button>
         <button type="button" class="dbtn" onclick="rAll()">Reset All Progress</button>
       </div>
-      <div style="text-align:center;color:#333;font-size:12px;padding:16px 0;">KB Training · Patrick's Program · v3.1</div>
+      <div style="text-align:center;color:#333;font-size:12px;padding:16px 0;">KB Training · Patrick's Program · v4.0</div>
     </div>
 
-  </div><!-- end scroll -->
+  </div>
   <nav id="nav">
     <button type="button" class="nb on" id="nb-today" onclick="gt('today')"><em>🏠</em>Today</button>
     <button type="button" class="nb" id="nb-program" onclick="gt('program')"><em>📋</em>Program</button>
     <button type="button" class="nb" id="nb-progress" onclick="gt('progress')"><em>📊</em>Progress</button>
     <button type="button" class="nb" id="nb-settings" onclick="gt('settings')"><em>⚙️</em>Settings</button>
   </nav>
-</div><!-- end app -->
+</div>
 
 <script>
+/* ============================================================
+   FIREBASE CONFIG — PASTE YOUR VALUES HERE IN THE MORNING
+   ============================================================ */
+var FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBmN632we_SqBg3HUZaLs-HU-NjEpePxWg",
+  authDomain:        "kb-training-ee9d1.firebaseapp.com",
+  databaseURL:       "https://kb-training-ee9d1-default-rtdb.firebaseio.com",
+  projectId:         "kb-training-ee9d1",
+  storageBucket:     "kb-training-ee9d1.firebasestorage.app",
+  messagingSenderId: "698738660209",
+  appId:             "1:698738660209:web:663aeda1e5f22ba80f5cd0"
+};
+/* ============================================================ */
+
 var PR={
   1:{name:'Beginner',days:{
     1:{name:'Hinge & Lower Body',ex:[
@@ -238,9 +266,51 @@ var PR={
 
 var S={done:false,w:16,unit:'kg',phase:1,week:1,day:1,tab:'today',ch:{},lg:{}};
 var su='kg';
+var db=null;
+var FB_READY=false;
 
-function lsLoad(){try{var r=localStorage.getItem('kbv5');if(r){var p=JSON.parse(r);S=Object.assign({},S,p);}}catch(e){}}
-function lsSave(){try{localStorage.setItem('kbv5',JSON.stringify(S));}catch(e){}}
+function initFirebase(){
+  try{
+    if(FIREBASE_CONFIG.apiKey==='PASTE_apiKey_HERE') return;
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.database();
+    FB_READY=true;
+    setSyncUI(true);
+  }catch(e){setSyncUI(false);}
+}
+
+function setSyncUI(on){
+  var dot=document.getElementById('sync-dot');
+  var lbl=document.getElementById('sync-label');
+  if(!dot) return;
+  dot.className='sync-dot '+(on?'sync-ok':'sync-off');
+  lbl.textContent=on?'Connected':'Offline';
+}
+
+function fbSave(){
+  if(!FB_READY||!db) return;
+  try{db.ref('/kb').set(S);}catch(e){}
+}
+
+function fbLoad(cb){
+  if(!FB_READY||!db){cb(false);return;}
+  try{
+    db.ref('/kb').once('value',function(snap){
+      var data=snap.val();
+      if(data){S=Object.assign({},S,data);cb(true);}
+      else cb(false);
+    });
+  }catch(e){cb(false);}
+}
+
+function lsLoad(){
+  try{var r=localStorage.getItem('kbv5');if(r){var p=JSON.parse(r);S=Object.assign({},S,p);}}catch(e){}
+}
+
+function lsSave(){
+  try{localStorage.setItem('kbv5',JSON.stringify(S));}catch(e){}
+  fbSave();
+}
 
 function ck(p,w,d,e,s){return p+'_'+w+'_'+d+'_'+e+'_'+s;}
 function lk(p,w,d){return p+'_'+w+'_'+d;}
@@ -252,28 +322,22 @@ function sU(u){
 }
 
 function go(){
-  var input=document.getElementById('sw');
-  var v=parseFloat(input.value);
+  var v=parseFloat(document.getElementById('sw').value);
   if(!v||v<1){alert('Please enter your bell weight.');return;}
-  S.w=v;
-  S.unit=su;
-  S.done=true;
-  lsSave();
+  S.w=v;S.unit=su;S.done=true;lsSave();
   document.getElementById('setup').style.display='none';
-  var appEl=document.getElementById('app');
-  appEl.style.display='flex';
+  document.getElementById('app').style.display='flex';
   gt('today');
 }
 
 function gt(t){
   S.tab=t;
-  var tabs=['today','program','progress','settings'];
-  for(var i=0;i<tabs.length;i++){
-    var tp=document.getElementById('tp-'+tabs[i]);
-    var nb=document.getElementById('nb-'+tabs[i]);
-    if(tp) tp.className='tp'+(tabs[i]==t?' on':'');
-    if(nb) nb.className='nb'+(tabs[i]==t?' on':'');
-  }
+  ['today','program','progress','settings'].forEach(function(x){
+    var tp=document.getElementById('tp-'+x);
+    var nb=document.getElementById('nb-'+x);
+    if(tp) tp.className='tp'+(x==t?' on':'');
+    if(nb) nb.className='nb'+(x==t?' on':'');
+  });
   if(t=='today') renderToday();
   else if(t=='program') renderProgram();
   else if(t=='progress') renderProgress();
@@ -284,107 +348,70 @@ function sd(d){S.day=d;lsSave();renderToday();}
 
 function allDone(){
   var ex=PR[S.phase].days[S.day].ex;
-  for(var i=0;i<ex.length;i++){
-    for(var s=0;s<ex[i].s;s++){
+  for(var i=0;i<ex.length;i++)
+    for(var s=0;s<ex[i].s;s++)
       if(!S.ch[ck(S.phase,S.week,S.day,i,s)]) return false;
-    }
-  }
   return true;
 }
 
 function tog(p,w,d,e,s){
-  var k=ck(p,w,d,e,s);
-  S.ch[k]=!S.ch[k];
-  lsSave();
-  renderToday();
+  var k=ck(p,w,d,e,s);S.ch[k]=!S.ch[k];lsSave();renderToday();
 }
 
 function logDay(){
   if(!allDone()) return;
   S.lg[lk(S.phase,S.week,S.day)]=true;
   var ex=PR[S.phase].days[S.day].ex;
-  for(var i=0;i<ex.length;i++){
-    for(var s=0;s<ex[i].s;s++){
+  for(var i=0;i<ex.length;i++)
+    for(var s=0;s<ex[i].s;s++)
       delete S.ch[ck(S.phase,S.week,S.day,i,s)];
-    }
-  }
   if(S.lg[lk(S.phase,S.week,1)]&&S.lg[lk(S.phase,S.week,2)]&&S.lg[lk(S.phase,S.week,3)]){
     S.week++;
     if(S.week>4){S.week=1;S.phase=Math.min(3,S.phase+1);}
   }
-  lsSave();
-  renderToday();
+  lsSave();renderToday();
 }
 
 function renderToday(){
   var phNames={1:'BEGINNER',2:'INTERMEDIATE',3:'ADVANCED'};
-  var dayNames={
-    1:{1:'Hinge & Lower Body',2:'Push & Pull',3:'Full Body'},
-    2:{1:'Hinge & Power',2:'Push & Pull Complex',3:'Full Body Conditioning'},
-    3:{1:'Strength & Power',2:'Push & Pull Advanced',3:'Advanced Conditioning'}
-  };
+  var dayNames={1:{1:'Hinge & Lower Body',2:'Push & Pull',3:'Full Body'},2:{1:'Hinge & Power',2:'Push & Pull Complex',3:'Full Body Conditioning'},3:{1:'Strength & Power',2:'Push & Pull Advanced',3:'Advanced Conditioning'}};
   document.getElementById('pbadge').textContent='PHASE '+S.phase+' · '+phNames[S.phase];
   document.getElementById('wbadge').textContent=S.w+' '+S.unit;
   document.getElementById('wklabel').textContent='Week '+S.week+' of 4';
   document.getElementById('dname').textContent=dayNames[S.phase][S.day];
-  for(var d=1;d<=3;d++){
-    document.getElementById('dp'+d).className='dp'+(S.day==d?' on':'');
-  }
-  var ex=PR[S.phase].days[S.day].ex;
-  var h='';
+  for(var d=1;d<=3;d++) document.getElementById('dp'+d).className='dp'+(S.day==d?' on':'');
+  var ex=PR[S.phase].days[S.day].ex,h='';
   for(var i=0;i<ex.length;i++){
     var e=ex[i];
-    h+='<div class="ex">';
-    h+='<h3>'+e.n+'</h3>';
-    h+='<p>'+e.s+' x '+e.r+' &middot; Rest '+e.rest+'</p>';
-    h+='<i>'+e.t+'</i>';
-    h+='<div class="circles">';
+    h+='<div class="ex"><h3>'+e.n+'</h3><p>'+e.s+' x '+e.r+' &middot; Rest '+e.rest+'</p><i>'+e.t+'</i><div class="circles">';
     for(var s=0;s<e.s;s++){
       var done=!!S.ch[ck(S.phase,S.week,S.day,i,s)];
       h+='<button type="button" class="c'+(done?' done':'')+'" onclick="tog('+S.phase+','+S.week+','+S.day+','+i+','+s+')">'+(done?'✓':(s+1))+'</button>';
     }
-    h+='</div>';
-    h+='<a class="vlink" href="https://www.youtube.com/results?search_query='+e.v+'" target="_blank">&#9654; Watch tutorial</a>';
-    h+='</div>';
+    h+='</div><a class="vlink" href="https://www.youtube.com/results?search_query='+e.v+'" target="_blank">▶ Watch tutorial</a></div>';
   }
   document.getElementById('exlist').innerHTML=h;
   var isLogged=!!S.lg[lk(S.phase,S.week,S.day)];
   var rdy=allDone();
-  var banner=document.getElementById('banner');
-  var btn=document.getElementById('logbtn');
-  if(isLogged){
-    banner.style.display='block';
-    banner.textContent='✅ Day '+S.day+' logged!';
-    btn.style.display='none';
-  } else {
-    banner.style.display='none';
-    btn.style.display='block';
-    btn.className='logbtn'+(rdy?' rdy':'');
-  }
+  var banner=document.getElementById('banner'),btn=document.getElementById('logbtn');
+  if(isLogged){banner.style.display='block';banner.textContent='✅ Day '+S.day+' logged!';btn.style.display='none';}
+  else{banner.style.display='none';btn.style.display='block';btn.className='logbtn'+(rdy?' rdy':'');}
 }
 
 function renderProgram(){
   var h='';
   for(var ph=1;ph<=3;ph++){
-    var d=PR[ph];
-    var cur=(ph==S.phase),done=(ph<S.phase);
-    var border=cur?'border-color:#f97316;':'';
+    var d=PR[ph],cur=(ph==S.phase),done=(ph<S.phase);
     var badge=cur?'<span class="pill og">CURRENT</span>':done?'<span class="pill gn">DONE</span>':'<span class="pill gy">LOCKED</span>';
-    h+='<div class="card" style="'+border+'">';
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
-    h+='<span style="font-size:16px;font-weight:700;">Phase '+ph+' &middot; '+d.name+'</span>'+badge;
-    h+='</div>';
+    h+='<div class="card" style="'+(cur?'border-color:#f97316;':'')+'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><span style="font-size:16px;font-weight:700;">Phase '+ph+' &middot; '+d.name+'</span>'+badge+'</div>';
     var wIn=cur?S.week-1:done?4:0;
     h+='<div style="display:flex;gap:5px;margin-bottom:12px;">';
     for(var w=0;w<4;w++) h+='<div style="width:10px;height:10px;border-radius:50%;background:'+(w<wIn?'#f97316':'#2a2a2a')+'"></div>';
     h+='</div>';
     for(var dd=1;dd<=3;dd++){
       var day=d.days[dd];
-      h+='<div style="padding:10px 0;border-top:1px solid #222;">';
-      h+='<div style="font-size:14px;font-weight:600;color:#ccc;margin-bottom:4px;">Day '+dd+' &mdash; '+day.name+'</div>';
-      for(var ei=0;ei<day.ex.length;ei++){
-        h+='<div style="font-size:13px;color:#555;padding:1px 0;">&middot; '+day.ex[ei].n+' <span style="color:#444;">'+day.ex[ei].s+'&times;'+day.ex[ei].r+'</span></div>';
-      }
+      h+='<div style="padding:10px 0;border-top:1px solid #222;"><div style="font-size:14px;font-weight:600;color:#ccc;margin-bottom:4px;">Day '+dd+' — '+day.name+'</div>';
+      for(var ei=0;ei<day.ex.length;ei++) h+='<div style="font-size:13px;color:#555;padding:1px 0;">· '+day.ex[ei].n+' <span style="color:#444;">'+day.ex[ei].s+'×'+day.ex[ei].r+'</span></div>';
       h+='</div>';
     }
     h+='</div>';
@@ -399,9 +426,7 @@ function renderProgress(){
   document.getElementById('prphlabel').textContent=pn[S.phase];
   document.getElementById('prwklabel').textContent='Week '+S.week+' of 4';
   document.getElementById('prbar').style.width=Math.round(((S.week-1)/4)*100)+'%';
-  for(var d=1;d<=3;d++){
-    document.getElementById('prd'+d).style.background=S.lg[lk(S.phase,S.week,d)]?'#f97316':'#2a2a2a';
-  }
+  for(var d=1;d<=3;d++) document.getElementById('prd'+d).style.background=S.lg[lk(S.phase,S.week,d)]?'#f97316':'#2a2a2a';
   document.getElementById('m1').className='ms'+(S.phase>1?' on':'');
   document.getElementById('m2').className='ms'+(S.phase>2?' on':'');
   document.getElementById('m3').className='ms'+(S.phase==3&&S.week>4?' on':'');
@@ -423,24 +448,17 @@ function stU(u){S.unit=u;lsSave();renderSettings();}
 function saveW(){
   var v=parseFloat(document.getElementById('setw').value);
   if(!v||v<1){alert('Enter a valid weight.');return;}
-  S.w=v;lsSave();renderToday();
-  alert('Saved! Bell: '+S.w+' '+S.unit);
+  S.w=v;lsSave();renderToday();alert('Saved! Bell: '+S.w+' '+S.unit);
 }
 
-function sPh(p){
-  S.phase=p;S.week=1;lsSave();renderSettings();renderToday();
-}
+function sPh(p){S.phase=p;S.week=1;lsSave();renderSettings();renderToday();}
 
 function rWk(){
   if(!confirm('Reset this week?')) return;
   for(var d=1;d<=3;d++){
     delete S.lg[lk(S.phase,S.week,d)];
     var ex=PR[S.phase].days[d].ex;
-    for(var i=0;i<ex.length;i++){
-      for(var s=0;s<ex[i].s;s++){
-        delete S.ch[ck(S.phase,S.week,d,i,s)];
-      }
-    }
+    for(var i=0;i<ex.length;i++) for(var s=0;s<ex[i].s;s++) delete S.ch[ck(S.phase,S.week,d,i,s)];
   }
   lsSave();renderToday();alert('Week reset.');
 }
@@ -452,13 +470,24 @@ function rAll(){
 }
 
 window.onload=function(){
-  lsLoad();
+  initFirebase();
+  lsLoad(); // load from localStorage immediately
   if(S.done){
     document.getElementById('setup').style.display='none';
-    var appEl=document.getElementById('app');
-    appEl.style.display='flex';
+    document.getElementById('app').style.display='flex';
     gt(S.tab||'today');
   }
+  // then pull latest from Firebase and refresh if newer
+  fbLoad(function(loaded){
+    if(loaded){
+      try{localStorage.setItem('kbv5',JSON.stringify(S));}catch(e){}
+      if(S.done){
+        document.getElementById('setup').style.display='none';
+        document.getElementById('app').style.display='flex';
+        gt(S.tab||'today');
+      }
+    }
+  });
 };
 </script>
 </body>
