@@ -5,7 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>KB Training</title>
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+/* ---- REST TIMER ---- */
+var timerInterval=null;
+var timerSecs=0;
+var timerTotal=0;
+
+function parseRest(str){
+  var m=str.match(/(\d+)/);
+  return m?parseInt(m[1]):60;
+}
+
+function startTimer(exName,restStr){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  timerSecs=parseRest(restStr);
+  timerTotal=timerSecs;
+  document.getElementById('timer-exname').textContent=exName;
+  document.getElementById('timer-num').textContent=timerSecs;
+  updateRing(timerSecs,timerTotal);
+  var overlay=document.getElementById('timer-overlay');
+  overlay.style.display='flex';
+  requestAnimationFrame(function(){overlay.classList.add('show');});
+  timerInterval=setInterval(function(){
+    timerSecs--;
+    if(timerSecs<=0){
+      clearInterval(timerInterval);timerInterval=null;
+      document.getElementById('timer-num').textContent='GO!';
+      updateRing(0,timerTotal);
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+      setTimeout(function(){dismissTimer();},1200);
+    } else {
+      document.getElementById('timer-num').textContent=timerSecs;
+      updateRing(timerSecs,timerTotal);
+    }
+  },1000);
+}
+
+function dismissTimer(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  var overlay=document.getElementById('timer-overlay');
+  overlay.classList.remove('show');
+  setTimeout(function(){overlay.style.display='none';},300);
+}
+
+function updateRing(current,total){
+  var circle=document.getElementById('timer-circle');
+  var circ=326.73;
+  var pct=total>0?current/total:0;
+  circle.style.strokeDashoffset=circ*(1-pct);
+}
+/* ---- END REST TIMER ---- */
+</script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -54,6 +104,16 @@ input[type=number]{-webkit-appearance:none;appearance:none;}
 .sync-ok{background:#22c55e;}
 .sync-off{background:#555;}
 .sync-row{display:flex;align-items:center;font-size:13px;color:#888;margin-top:8px;}
+
+/* REST TIMER */
+#timer-overlay{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;border-top:2px solid #f97316;border-radius:20px 20px 0 0;padding:20px 24px calc(20px + env(safe-area-inset-bottom,0px));z-index:1000;display:none;flex-direction:column;align-items:center;transform:translateY(100%);transition:transform 0.3s ease;}
+#timer-overlay.show{display:flex;transform:translateY(0);}
+.timer-label{font-size:12px;font-weight:700;color:#f97316;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.timer-exname{font-size:15px;font-weight:700;color:#ccc;margin-bottom:16px;text-align:center;}
+.timer-ring{position:relative;width:120px;height:120px;margin-bottom:16px;}
+.timer-ring svg{transform:rotate(-90deg);}
+.timer-ring-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:38px;font-weight:800;color:#f97316;line-height:1;}
+.timer-skip{background:#2a2a2a;border:none;border-radius:12px;color:#888;font-size:15px;font-weight:700;padding:14px 48px;min-height:44px;}
 </style>
 </head>
 <body>
@@ -355,7 +415,16 @@ function allDone(){
 }
 
 function tog(p,w,d,e,s){
-  var k=ck(p,w,d,e,s);S.ch[k]=!S.ch[k];lsSave();renderToday();
+  var k=ck(p,w,d,e,s);
+  var wasUnchecked=!S.ch[k];
+  S.ch[k]=!S.ch[k];
+  lsSave();renderToday();
+  if(wasUnchecked){
+    var ex=PR[p].days[d].ex[e];
+    startTimer(ex.n,ex.rest);
+  } else {
+    dismissTimer();
+  }
 }
 
 function logDay(){
@@ -490,5 +559,20 @@ window.onload=function(){
   });
 };
 </script>
+
+<!-- REST TIMER OVERLAY -->
+<div id="timer-overlay">
+  <div class="timer-label">Rest</div>
+  <div id="timer-exname" class="timer-exname"></div>
+  <div class="timer-ring">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="52" fill="none" stroke="#2a2a2a" stroke-width="8"/>
+      <circle id="timer-circle" cx="60" cy="60" r="52" fill="none" stroke="#f97316" stroke-width="8"
+        stroke-dasharray="326.73" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 0.9s linear;"/>
+    </svg>
+    <div id="timer-num" class="timer-ring-num">60</div>
+  </div>
+  <button type="button" class="timer-skip" onclick="dismissTimer()">Skip →</button>
+</div>
 </body>
 </html>
