@@ -56,8 +56,8 @@ input[type=number]{-webkit-appearance:none;appearance:none;}
 .sync-row{display:flex;align-items:center;font-size:13px;color:#888;margin-top:8px;}
 
 /* REST TIMER */
-#timer-overlay{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;border-top:2px solid #f97316;border-radius:20px 20px 0 0;padding:20px 24px calc(20px + env(safe-area-inset-bottom,0px));z-index:1000;display:none;flex-direction:column;align-items:center;transform:translateY(100%);transition:transform 0.3s ease;}
-#timer-overlay.show{display:flex;transform:translateY(0);}
+#timer-overlay{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;border-top:2px solid #f97316;border-radius:20px 20px 0 0;padding:20px 24px calc(20px + env(safe-area-inset-bottom,0px));z-index:1000;display:flex;flex-direction:column;align-items:center;transform:translateY(110%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);pointer-events:none;}
+#timer-overlay.show{transform:translateY(0);pointer-events:auto;}
 .timer-label{font-size:12px;font-weight:700;color:#f97316;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
 .timer-exname{font-size:15px;font-weight:700;color:#ccc;margin-bottom:16px;text-align:center;}
 .timer-ring{position:relative;width:120px;height:120px;margin-bottom:16px;}
@@ -527,8 +527,7 @@ function startTimer(exName,restStr){
   document.getElementById('timer-num').textContent=timerSecs;
   updateRing(timerSecs,timerTotal);
   var overlay=document.getElementById('timer-overlay');
-  overlay.style.display='flex';
-  requestAnimationFrame(function(){overlay.classList.add('show');});
+  overlay.classList.add('show');
   timerInterval=setInterval(function(){
     timerSecs--;
     if(timerSecs<=0){
@@ -548,7 +547,6 @@ function dismissTimer(){
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   var overlay=document.getElementById('timer-overlay');
   overlay.classList.remove('show');
-  setTimeout(function(){overlay.style.display='none';},300);
 }
 
 function updateRing(current,total){
