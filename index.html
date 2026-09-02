@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KB Training</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:#111;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;}
+body{display:flex;flex-direction:column;overflow:hidden;}
+button{-webkit-appearance:none;appearance:none;touch-action:manipulation;cursor:pointer;}
+#setup{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;background:#111;}
+#app{flex:1;display:none;flex-direction:column;overflow:hidden;}
+#scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 32px;}
+#nav{background:#1a1a1a;border-top:1px solid #2a2a2a;display:flex;padding-bottom:env(safe-area-inset-bottom,0px);flex-shrink:0;}
+.nb{flex:1;background:none;border:none;border-top:3px solid transparent;color:#888;font-size:10px;font-weight:600;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;}
+.nb.on{color:#f97316;border-top-color:#f97316;}
+.nb em{font-size:20px;font-style:normal;}
+.tp{display:none;}
+.tp.on{display:block;}
+.card{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:14px;padding:16px;margin-bottom:12px;}
+.ex{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:14px;padding:14px;margin-bottom:10px;}
+.ex h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:3px;}
+.ex p{font-size:13px;color:#888;margin-bottom:4px;}
+.ex i{font-size:12px;color:#666;display:block;margin-bottom:10px;}
+.circles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.c{width:44px;height:44px;border-radius:50%;border:2px solid #2a2a2a;background:#111;color:#888;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.c.done{background:#f97316;border-color:#f97316;color:#fff;}
+.vlink{display:inline-flex;align-items:center;gap:4px;color:#f97316;font-size:12px;font-weight:600;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:6px 12px;text-decoration:none;touch-action:manipulation;}
+.days{display:flex;gap:8px;margin:10px 0 14px;}
+.dp{flex:1;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:10px;color:#888;font-size:14px;font-weight:600;padding:10px 4px;min-height:44px;}
+.dp.on{background:#f97316;border-color:#f97316;color:#fff;}
+.logbtn{width:100%;background:#2a2a2a;border:none;border-radius:14px;color:#555;font-size:16px;font-weight:700;padding:16px;margin-top:8px;}
+.logbtn.rdy{background:#f97316;color:#fff;}
+.banner{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:12px 16px;color:#22c55e;font-size:14px;text-align:center;margin-top:8px;display:none;}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:11px;font-weight:700;}
+.og{background:rgba(249,115,22,0.15);color:#f97316;}
+.gn{background:rgba(34,197,94,0.1);color:#22c55e;}
+.gy{background:#2a2a2a;color:#888;}
+.wbadge{background:rgba(249,115,22,0.15);color:#f97316;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;}
+.pbg{height:6px;background:#2a2a2a;border-radius:3px;margin-top:8px;}
+.pfill{height:6px;background:#f97316;border-radius:3px;}
+.ms{display:flex;align-items:center;gap:12px;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;margin-bottom:8px;opacity:0.3;}
+.ms.on{border-color:rgba(249,115,22,0.4);background:rgba(249,115,22,0.06);opacity:1;}
+.stog{border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;min-height:44px;}
+.son{background:#f97316;color:#fff;}
+.soff{background:#2a2a2a;color:#888;}
+.dbtn{width:100%;background:transparent;border:1px solid #ef4444;color:#ef4444;border-radius:12px;padding:13px;font-size:15px;margin-bottom:8px;min-height:44px;}
+input[type=number]{-webkit-appearance:none;appearance:none;}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup">
+  <div style="font-size:60px;margin-bottom:16px;text-align:center;">🏋️</div>
+  <div style="font-size:24px;font-weight:700;margin-bottom:6px;text-align:center;">KB Training</div>
+  <div style="color:#888;font-size:15px;margin-bottom:28px;text-align:center;">Enter your kettlebell weight to begin</div>
+  <div style="width:100%;max-width:360px;">
+    <div style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;">Bell Weight</div>
+    <div style="display:flex;gap:8px;margin-bottom:18px;">
+      <input id="sw" type="number" value="16" min="1" max="200" inputmode="decimal"
+        style="flex:1;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:12px;color:#fff;font-size:22px;padding:12px 16px;outline:none;">
+      <button type="button" id="bkg" class="stog son" onclick="sU('kg')">kg</button>
+      <button type="button" id="blbs" class="stog soff" onclick="sU('lbs')">lbs</button>
+    </div>
+    <div style="background:#1e1e1e;border:1px solid #2a2a2a;border-radius:12px;padding:14px;margin-bottom:24px;display:flex;gap:12px;align-items:center;">
+      <span style="font-size:20px;">🔔</span>
+      <div>
+        <div style="color:#ccc;font-size:14px;font-weight:600;">Single bell mode: ON</div>
+        <div style="color:#666;font-size:12px;margin-top:2px;">All exercises use one kettlebell</div>
+      </div>
+    </div>
+    <button type="button" id="startbtn" onclick="go()" style="width:100%;background:#f97316;border:none;border-radius:14px;color:#fff;font-size:17px;font-weight:700;padding:18px;display:block;">Start Training →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div id="scroll">
+
+    <!-- TODAY -->
+    <div id="tp-today" class="tp on">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span id="pbadge" class="pill og">PHASE 1 · BEGINNER</span>
+        <span id="wbadge" class="wbadge">16 kg</span>
+      </div>
+      <div id="wklabel" style="color:#888;font-size:13px;margin-bottom:2px;">Week 1 of 4</div>
+      <div class="days">
+        <button type="button" id="dp1" class="dp on" onclick="sd(1)">Day 1</button>
+        <button type="button" id="dp2" class="dp" onclick="sd(2)">Day 2</button>
+        <button type="button" id="dp3" class="dp" onclick="sd(3)">Day 3</button>
+      </div>
+      <div id="dname" style="font-size:15px;font-weight:700;color:#ccc;margin-bottom:12px;">Hinge &amp; Lower Body</div>
+      <div id="exlist"></div>
+      <div id="banner" class="banner">✅ Day logged!</div>
+      <button type="button" id="logbtn" class="logbtn" onclick="logDay()">Log Workout</button>
+    </div>
+
+    <!-- PROGRAM -->
+    <div id="tp-program" class="tp">
+      <div style="font-size:22px;font-weight:700;margin-bottom:16px;">Your Program</div>
+      <div id="pglist"></div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="tp-progress" class="tp">
+      <div style="font-size:22px;font-weight:700;margin-bottom:16px;">Progress</div>
+      <div class="card" style="text-align:center;padding:24px;">
+        <div id="scount" style="font-size:52px;font-weight:800;color:#f97316;">0</div>
+        <div style="color:#888;font-size:14px;margin-top:4px;">sessions completed 🔥</div>
+      </div>
+      <div class="card" style="border-color:#f97316;">
+        <div id="prphlabel" style="font-size:16px;font-weight:700;margin-bottom:4px;">Phase 1 · Beginner</div>
+        <div id="prwklabel" style="color:#888;font-size:13px;">Week 1 of 4</div>
+        <div class="pbg"><div id="prbar" class="pfill" style="width:0%"></div></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <div id="prd1" style="width:34px;height:34px;border-radius:50%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">D1</div>
+          <div id="prd2" style="width:34px;height:34px;border-radius:50%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">D2</div>
+          <div id="prd3" style="width:34px;height:34px;border-radius:50%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">D3</div>
+        </div>
+      </div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:10px;">Milestones</div>
+      <div id="m1" class="ms"><span style="font-size:26px;">🏅</span><div><div style="font-size:15px;font-weight:700;">Phase 1 Complete</div><div style="color:#888;font-size:12px;margin-top:2px;">4 weeks of beginner training</div></div></div>
+      <div id="m2" class="ms"><span style="font-size:26px;">🥈</span><div><div style="font-size:15px;font-weight:700;">Phase 2 Complete</div><div style="color:#888;font-size:12px;margin-top:2px;">4 weeks of intermediate training</div></div></div>
+      <div id="m3" class="ms"><span style="font-size:26px;">🏆</span><div><div style="font-size:15px;font-weight:700;">Advanced Athlete</div><div style="color:#888;font-size:12px;margin-top:2px;">Full 12-week program complete</div></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tp-settings" class="tp">
+      <div style="font-size:22px;font-weight:700;margin-bottom:16px;">Settings</div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px;">My Kettlebell</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input id="setw" type="number" min="1" max="200" inputmode="decimal"
+            style="width:85px;background:#111;border:1px solid #2a2a2a;border-radius:10px;color:#fff;font-size:18px;padding:10px 12px;outline:none;">
+          <button type="button" id="setkg" class="stog son" onclick="stU('kg')">kg</button>
+          <button type="button" id="setlbs" class="stog soff" onclick="stU('lbs')">lbs</button>
+          <button type="button" onclick="saveW()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;min-height:44px;">Save</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:700;margin-bottom:8px;">Current Phase</div>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="sph1" class="stog son" style="flex:1;" onclick="sPh(1)">Phase 1</button>
+          <button type="button" id="sph2" class="stog soff" style="flex:1;" onclick="sPh(2)">Phase 2</button>
+          <button type="button" id="sph3" class="stog soff" style="flex:1;" onclick="sPh(3)">Phase 3</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:#ef4444;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Danger Zone</div>
+        <button type="button" class="dbtn" onclick="rWk()">Reset This Week</button>
+        <button type="button" class="dbtn" onclick="rAll()">Reset All Progress</button>
+      </div>
+      <div style="text-align:center;color:#333;font-size:12px;padding:16px 0;">KB Training · Patrick's Program · v3.1</div>
+    </div>
+
+  </div><!-- end scroll -->
+  <nav id="nav">
+    <button type="button" class="nb on" id="nb-today" onclick="gt('today')"><em>🏠</em>Today</button>
+    <button type="button" class="nb" id="nb-program" onclick="gt('program')"><em>📋</em>Program</button>
+    <button type="button" class="nb" id="nb-progress" onclick="gt('progress')"><em>📊</em>Progress</button>
+    <button type="button" class="nb" id="nb-settings" onclick="gt('settings')"><em>⚙️</em>Settings</button>
+  </nav>
+</div><!-- end app -->
+
+<script>
+var PR={
+  1:{name:'Beginner',days:{
+    1:{name:'Hinge & Lower Body',ex:[
+      {n:'KB Deadlift',s:3,r:'8 reps',rest:'60s',t:'Hinge at hips, brace core',v:'kettlebell+deadlift+tutorial'},
+      {n:'Goblet Squat',s:3,r:'10 reps',rest:'60s',t:'Elbows inside knees, chest tall',v:'kettlebell+goblet+squat+tutorial'},
+      {n:'Two-Hand Swing',s:4,r:'15 reps',rest:'90s',t:'Snap hips forward — not a squat',v:'kettlebell+swing+tutorial+beginner'},
+      {n:'Goblet Lateral Lunge',s:3,r:'8 each side',rest:'60s',t:'Push knee out over toes',v:'kettlebell+goblet+lateral+lunge'},
+      {n:'Farmer Carry',s:3,r:'30m',rest:'60s',t:'Tall spine, shoulders packed',v:'kettlebell+farmer+carry+form'}
+    ]},
+    2:{name:'Push & Pull',ex:[
+      {n:'KB Clean',s:3,r:'5 each side',rest:'75s',t:'Guide bell close to body',v:'kettlebell+clean+tutorial'},
+      {n:'KB Press',s:3,r:'5 each side',rest:'75s',t:'Stack wrist over elbow over shoulder',v:'kettlebell+press+tutorial'},
+      {n:'Bent-Over Row',s:3,r:'8 each side',rest:'60s',t:'Hinge 45 deg, row to hip',v:'kettlebell+single+arm+row'},
+      {n:'Floor Press',s:3,r:'10 reps',rest:'60s',t:'Lower slowly, pause at bottom',v:'kettlebell+floor+press+tutorial'},
+      {n:'KB Halo',s:3,r:'8 each dir.',rest:'45s',t:'Core tight, move only arms',v:'kettlebell+halo+exercise'}
+    ]},
+    3:{name:'Full Body',ex:[
+      {n:'Turkish Get-Up',s:3,r:'3 each side',rest:'90s',t:'Go slow — own every position',v:'kettlebell+turkish+get+up+tutorial'},
+      {n:'Two-Hand Swing',s:4,r:'20 reps',rest:'90s',t:'Breathe out on each hip snap',v:'kettlebell+swing+tutorial+beginner'},
+      {n:'KB Deadlift',s:3,r:'10 reps',rest:'60s',t:'Feel hamstrings load going down',v:'kettlebell+deadlift+tutorial'},
+      {n:'KB Windmill',s:3,r:'5 each side',rest:'60s',t:'Eyes on bell, slow descent',v:'kettlebell+windmill+tutorial'}
+    ]}
+  }},
+  2:{name:'Intermediate',days:{
+    1:{name:'Hinge & Power',ex:[
+      {n:'KB Romanian Deadlift',s:4,r:'8 each side',rest:'75s',t:'Feel hamstring stretch before returning',v:'single+leg+kettlebell+romanian+deadlift'},
+      {n:'Goblet Squat pause',s:4,r:'12 reps',rest:'60s',t:'2-sec pause at the bottom',v:'kettlebell+goblet+squat+pause'},
+      {n:'Single-Arm Swing',s:4,r:'10 each side',rest:'90s',t:'Switch hands at top with control',v:'kettlebell+single+arm+swing'},
+      {n:'Reverse Lunge',s:3,r:'10 each side',rest:'60s',t:'Bell at chest, back knee soft land',v:'kettlebell+reverse+lunge+front+rack'},
+      {n:'Suitcase Carry',s:3,r:'30m each side',rest:'60s',t:'Resist leaning — core works hard',v:'kettlebell+suitcase+carry+tutorial'}
+    ]},
+    2:{name:'Push & Pull Complex',ex:[
+      {n:'Clean and Press',s:4,r:'5 each side',rest:'90s',t:'Link clean into press fluidly',v:'kettlebell+clean+and+press+tutorial'},
+      {n:'Push Press',s:3,r:'6 each side',rest:'75s',t:'Slight dip, drive legs into press',v:'kettlebell+push+press+tutorial'},
+      {n:'Renegade Row',s:3,r:'6 each side',rest:'90s',t:'Keep hips level, do not rotate',v:'kettlebell+renegade+row+tutorial'},
+      {n:'Floor Press',s:3,r:'12 reps',rest:'60s',t:'3 seconds down — control descent',v:'kettlebell+floor+press+tutorial'},
+      {n:'KB Windmill',s:3,r:'5 each side',rest:'60s',t:'Extend reach, feel the lat stretch',v:'kettlebell+windmill+tutorial'}
+    ]},
+    3:{name:'Full Body Conditioning',ex:[
+      {n:'Turkish Get-Up',s:4,r:'3 each side',rest:'90s',t:'Add weight only if form is perfect',v:'kettlebell+turkish+get+up+tutorial'},
+      {n:'Single-Arm Swing',s:5,r:'10 each side',rest:'90s',t:'Maximise hip power every rep',v:'kettlebell+single+arm+swing'},
+      {n:'KB Snatch',s:3,r:'5 each side',rest:'90s',t:'Punch through at top, lock out',v:'kettlebell+snatch+tutorial+beginner'},
+      {n:'Front Rack Carry',s:3,r:'30m each side',rest:'60s',t:'Elbow tight, core braced, breathe steady',v:'kettlebell+front+rack+carry'},
+      {n:'Around the World',s:3,r:'8 each dir.',rest:'45s',t:'Controlled speed, grip stays firm',v:'kettlebell+around+the+world+exercise'}
+    ]}
+  }},
+  3:{name:'Advanced',days:{
+    1:{name:'Strength & Power',ex:[
+      {n:'KB Swing Max Power',s:5,r:'20 reps',rest:'90s',t:'Explosive hips — max power every rep',v:'kettlebell+swing+power+development'},
+      {n:'Goblet Squat to Press',s:4,r:'8 reps',rest:'75s',t:'Drive from squat directly into press',v:'kettlebell+goblet+squat+to+press'},
+      {n:'Single-Leg DL plus Row',s:4,r:'6 each side',rest:'75s',t:'Balance is bracing, row pulls scapula',v:'kettlebell+single+leg+deadlift+row'},
+      {n:'Assisted Pistol Squat',s:3,r:'5 each side',rest:'90s',t:'Hold bell as counterweight for balance',v:'kettlebell+assisted+pistol+squat'},
+      {n:'Suitcase Carry Fast',s:3,r:'40m each side',rest:'60s',t:'Walk faster than Phase 2',v:'kettlebell+suitcase+carry+advanced'}
+    ]},
+    2:{name:'Push & Pull Advanced',ex:[
+      {n:'Clean to Press',s:5,r:'5 each side',rest:'90s',t:'Crisp clean, zero pause, into press',v:'kettlebell+clean+press+advanced'},
+      {n:'Push Press Heavy',s:4,r:'8 each side',rest:'75s',t:'Legs are a spring — use them fully',v:'kettlebell+push+press+tutorial'},
+      {n:'Renegade Row Slow',s:4,r:'8 each side',rest:'90s',t:'2s up, 2s down — feel every fibre',v:'kettlebell+renegade+row+tutorial'},
+      {n:'Bottoms-Up Press',s:3,r:'5 each side',rest:'90s',t:'Grip hard, wrist neutral, total focus',v:'kettlebell+bottoms+up+press'},
+      {n:'KB Windmill Heavy',s:4,r:'6 each side',rest:'60s',t:'Maximise range — full oblique stretch',v:'kettlebell+windmill+advanced'}
+    ]},
+    3:{name:'Advanced Conditioning',ex:[
+      {n:'Turkish Get-Up',s:5,r:'3 each side',rest:'90s',t:'Slow and perfect — tempo is the training',v:'kettlebell+turkish+get+up+advanced'},
+      {n:'KB Snatch',s:5,r:'5 each side',rest:'90s',t:'Accelerate through hip, punch at top',v:'kettlebell+snatch+advanced'},
+      {n:'Swing Clean Press Flow',s:3,r:'5 each side',rest:'90s',t:'Link 3 moves as one fluid chain',v:'kettlebell+flow+swing+clean+press'},
+      {n:'Front Rack Lunge',s:4,r:'8 each side',rest:'75s',t:'Step long, knee tracks toe, stand tall',v:'kettlebell+front+rack+lunge'},
+      {n:'Snatch plus Overhead Hold',s:3,r:'5 each side',rest:'90s',t:'Hold lockout 3 sec — anti-shrug',v:'kettlebell+snatch+overhead+hold'}
+    ]}
+  }}
+};
+
+var S={done:false,w:16,unit:'kg',phase:1,week:1,day:1,tab:'today',ch:{},lg:{}};
+var su='kg';
+
+function lsLoad(){try{var r=localStorage.getItem('kbv5');if(r){var p=JSON.parse(r);S=Object.assign({},S,p);}}catch(e){}}
+function lsSave(){try{localStorage.setItem('kbv5',JSON.stringify(S));}catch(e){}}
+
+function ck(p,w,d,e,s){return p+'_'+w+'_'+d+'_'+e+'_'+s;}
+function lk(p,w,d){return p+'_'+w+'_'+d;}
+
+function sU(u){
+  su=u;
+  document.getElementById('bkg').className='stog '+(u=='kg'?'son':'soff');
+  document.getElementById('blbs').className='stog '+(u=='lbs'?'son':'soff');
+}
+
+function go(){
+  var input=document.getElementById('sw');
+  var v=parseFloat(input.value);
+  if(!v||v<1){alert('Please enter your bell weight.');return;}
+  S.w=v;
+  S.unit=su;
+  S.done=true;
+  lsSave();
+  document.getElementById('setup').style.display='none';
+  var appEl=document.getElementById('app');
+  appEl.style.display='flex';
+  gt('today');
+}
+
+function gt(t){
+  S.tab=t;
+  var tabs=['today','program','progress','settings'];
+  for(var i=0;i<tabs.length;i++){
+    var tp=document.getElementById('tp-'+tabs[i]);
+    var nb=document.getElementById('nb-'+tabs[i]);
+    if(tp) tp.className='tp'+(tabs[i]==t?' on':'');
+    if(nb) nb.className='nb'+(tabs[i]==t?' on':'');
+  }
+  if(t=='today') renderToday();
+  else if(t=='program') renderProgram();
+  else if(t=='progress') renderProgress();
+  else if(t=='settings') renderSettings();
+}
+
+function sd(d){S.day=d;lsSave();renderToday();}
+
+function allDone(){
+  var ex=PR[S.phase].days[S.day].ex;
+  for(var i=0;i<ex.length;i++){
+    for(var s=0;s<ex[i].s;s++){
+      if(!S.ch[ck(S.phase,S.week,S.day,i,s)]) return false;
+    }
+  }
+  return true;
+}
+
+function tog(p,w,d,e,s){
+  var k=ck(p,w,d,e,s);
+  S.ch[k]=!S.ch[k];
+  lsSave();
+  renderToday();
+}
+
+function logDay(){
+  if(!allDone()) return;
+  S.lg[lk(S.phase,S.week,S.day)]=true;
+  var ex=PR[S.phase].days[S.day].ex;
+  for(var i=0;i<ex.length;i++){
+    for(var s=0;s<ex[i].s;s++){
+      delete S.ch[ck(S.phase,S.week,S.day,i,s)];
+    }
+  }
+  if(S.lg[lk(S.phase,S.week,1)]&&S.lg[lk(S.phase,S.week,2)]&&S.lg[lk(S.phase,S.week,3)]){
+    S.week++;
+    if(S.week>4){S.week=1;S.phase=Math.min(3,S.phase+1);}
+  }
+  lsSave();
+  renderToday();
+}
+
+function renderToday(){
+  var phNames={1:'BEGINNER',2:'INTERMEDIATE',3:'ADVANCED'};
+  var dayNames={
+    1:{1:'Hinge & Lower Body',2:'Push & Pull',3:'Full Body'},
+    2:{1:'Hinge & Power',2:'Push & Pull Complex',3:'Full Body Conditioning'},
+    3:{1:'Strength & Power',2:'Push & Pull Advanced',3:'Advanced Conditioning'}
+  };
+  document.getElementById('pbadge').textContent='PHASE '+S.phase+' · '+phNames[S.phase];
+  document.getElementById('wbadge').textContent=S.w+' '+S.unit;
+  document.getElementById('wklabel').textContent='Week '+S.week+' of 4';
+  document.getElementById('dname').textContent=dayNames[S.phase][S.day];
+  for(var d=1;d<=3;d++){
+    document.getElementById('dp'+d).className='dp'+(S.day==d?' on':'');
+  }
+  var ex=PR[S.phase].days[S.day].ex;
+  var h='';
+  for(var i=0;i<ex.length;i++){
+    var e=ex[i];
+    h+='<div class="ex">';
+    h+='<h3>'+e.n+'</h3>';
+    h+='<p>'+e.s+' x '+e.r+' &middot; Rest '+e.rest+'</p>';
+    h+='<i>'+e.t+'</i>';
+    h+='<div class="circles">';
+    for(var s=0;s<e.s;s++){
+      var done=!!S.ch[ck(S.phase,S.week,S.day,i,s)];
+      h+='<button type="button" class="c'+(done?' done':'')+'" onclick="tog('+S.phase+','+S.week+','+S.day+','+i+','+s+')">'+(done?'✓':(s+1))+'</button>';
+    }
+    h+='</div>';
+    h+='<a class="vlink" href="https://www.youtube.com/results?search_query='+e.v+'" target="_blank">&#9654; Watch tutorial</a>';
+    h+='</div>';
+  }
+  document.getElementById('exlist').innerHTML=h;
+  var isLogged=!!S.lg[lk(S.phase,S.week,S.day)];
+  var rdy=allDone();
+  var banner=document.getElementById('banner');
+  var btn=document.getElementById('logbtn');
+  if(isLogged){
+    banner.style.display='block';
+    banner.textContent='✅ Day '+S.day+' logged!';
+    btn.style.display='none';
+  } else {
+    banner.style.display='none';
+    btn.style.display='block';
+    btn.className='logbtn'+(rdy?' rdy':'');
+  }
+}
+
+function renderProgram(){
+  var h='';
+  for(var ph=1;ph<=3;ph++){
+    var d=PR[ph];
+    var cur=(ph==S.phase),done=(ph<S.phase);
+    var border=cur?'border-color:#f97316;':'';
+    var badge=cur?'<span class="pill og">CURRENT</span>':done?'<span class="pill gn">DONE</span>':'<span class="pill gy">LOCKED</span>';
+    h+='<div class="card" style="'+border+'">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<span style="font-size:16px;font-weight:700;">Phase '+ph+' &middot; '+d.name+'</span>'+badge;
+    h+='</div>';
+    var wIn=cur?S.week-1:done?4:0;
+    h+='<div style="display:flex;gap:5px;margin-bottom:12px;">';
+    for(var w=0;w<4;w++) h+='<div style="width:10px;height:10px;border-radius:50%;background:'+(w<wIn?'#f97316':'#2a2a2a')+'"></div>';
+    h+='</div>';
+    for(var dd=1;dd<=3;dd++){
+      var day=d.days[dd];
+      h+='<div style="padding:10px 0;border-top:1px solid #222;">';
+      h+='<div style="font-size:14px;font-weight:600;color:#ccc;margin-bottom:4px;">Day '+dd+' &mdash; '+day.name+'</div>';
+      for(var ei=0;ei<day.ex.length;ei++){
+        h+='<div style="font-size:13px;color:#555;padding:1px 0;">&middot; '+day.ex[ei].n+' <span style="color:#444;">'+day.ex[ei].s+'&times;'+day.ex[ei].r+'</span></div>';
+      }
+      h+='</div>';
+    }
+    h+='</div>';
+  }
+  document.getElementById('pglist').innerHTML=h;
+}
+
+function renderProgress(){
+  var total=Object.keys(S.lg).filter(function(k){return S.lg[k];}).length;
+  document.getElementById('scount').textContent=total;
+  var pn={1:'Phase 1 · Beginner',2:'Phase 2 · Intermediate',3:'Phase 3 · Advanced'};
+  document.getElementById('prphlabel').textContent=pn[S.phase];
+  document.getElementById('prwklabel').textContent='Week '+S.week+' of 4';
+  document.getElementById('prbar').style.width=Math.round(((S.week-1)/4)*100)+'%';
+  for(var d=1;d<=3;d++){
+    document.getElementById('prd'+d).style.background=S.lg[lk(S.phase,S.week,d)]?'#f97316':'#2a2a2a';
+  }
+  document.getElementById('m1').className='ms'+(S.phase>1?' on':'');
+  document.getElementById('m2').className='ms'+(S.phase>2?' on':'');
+  document.getElementById('m3').className='ms'+(S.phase==3&&S.week>4?' on':'');
+}
+
+function renderSettings(){
+  document.getElementById('setw').value=S.w;
+  document.getElementById('setkg').className='stog '+(S.unit=='kg'?'son':'soff');
+  document.getElementById('setlbs').className='stog '+(S.unit=='lbs'?'son':'soff');
+  for(var p=1;p<=3;p++){
+    var b=document.getElementById('sph'+p);
+    b.style.background=S.phase==p?'#f97316':'#2a2a2a';
+    b.style.color=S.phase==p?'#fff':'#888';
+  }
+}
+
+function stU(u){S.unit=u;lsSave();renderSettings();}
+
+function saveW(){
+  var v=parseFloat(document.getElementById('setw').value);
+  if(!v||v<1){alert('Enter a valid weight.');return;}
+  S.w=v;lsSave();renderToday();
+  alert('Saved! Bell: '+S.w+' '+S.unit);
+}
+
+function sPh(p){
+  S.phase=p;S.week=1;lsSave();renderSettings();renderToday();
+}
+
+function rWk(){
+  if(!confirm('Reset this week?')) return;
+  for(var d=1;d<=3;d++){
+    delete S.lg[lk(S.phase,S.week,d)];
+    var ex=PR[S.phase].days[d].ex;
+    for(var i=0;i<ex.length;i++){
+      for(var s=0;s<ex[i].s;s++){
+        delete S.ch[ck(S.phase,S.week,d,i,s)];
+      }
+    }
+  }
+  lsSave();renderToday();alert('Week reset.');
+}
+
+function rAll(){
+  if(!confirm('Reset ALL progress? Cannot be undone.')) return;
+  S={done:true,w:S.w,unit:S.unit,phase:1,week:1,day:1,tab:'today',ch:{},lg:{}};
+  lsSave();gt('today');alert('Reset done.');
+}
+
+window.onload=function(){
+  lsLoad();
+  if(S.done){
+    document.getElementById('setup').style.display='none';
+    var appEl=document.getElementById('app');
+    appEl.style.display='flex';
+    gt(S.tab||'today');
+  }
+};
+</script>
+</body>
+</html>
